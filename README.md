@@ -1,20 +1,12 @@
-# Project 12 — Terraform Infrastructure as Code on Google Cloud
+# Terraform Infrastructure as Code on Google Cloud
 
 ## 📌 Project Overview
 
-This project demonstrates **Infrastructure as Code (IaC)** using **Terraform** to provision and configure infrastructure on **Google Cloud Platform (GCP)**.
+This project demonstrates how to provision and manage Google Cloud infrastructure using **Terraform Infrastructure as Code (IaC)**.
 
-Instead of manually creating cloud resources through the GCP Console, Terraform is used to define the infrastructure as code and automatically provision:
+Instead of manually creating cloud resources through the Google Cloud Console, Terraform is used to define, deploy, and manage the infrastructure.
 
-- Custom VPC Network
-- Subnet
-- Firewall Rule
-- Compute Engine VM
-- Public IP
-- Docker
-- Nginx Web Server
-
-The Compute Engine VM uses a **Terraform startup script** to automatically install Docker and deploy an Nginx container.
+The deployed environment includes a custom VPC network, subnet, firewall rule, Compute Engine VM, Docker, and an Nginx web application.
 
 ---
 
@@ -28,34 +20,29 @@ The Compute Engine VM uses a **Terraform startup script** to automatically insta
                         │
                         ▼
                   Custom VPC
-                  project12-vpc
                         │
                         ▼
-                Custom Subnet
-               project12-subnet
+                    Subnet
                         │
-             ┌──────────┴──────────┐
-             │                     │
-             ▼                     ▼
-       Firewall Rule         Compute Engine VM
-       TCP Port 80            project12-app-vm
-                                   │
-                                   ▼
-                                Docker
-                                   │
-                                   ▼
-                              Nginx Container
-                                   │
-                                   ▼
-                              Port 80 / HTTP
-                                   │
-                                   ▼
-                         🌐 Nginx Web Application
+                        ▼
+              Firewall Rule (HTTP)
+                        │
+                        ▼
+               Compute Engine VM
+                        │
+                        ▼
+                     Docker
+                        │
+                        ▼
+                Nginx Web Server
+                        │
+                        ▼
+                  Web Browser
 ```
 
 ---
 
-# 🛠️ Technologies Used
+## 🛠️ Technologies Used
 
 | Technology | Purpose |
 |---|---|
@@ -63,75 +50,39 @@ The Compute Engine VM uses a **Terraform startup script** to automatically insta
 | Google Cloud Platform | Cloud infrastructure |
 | Compute Engine | Virtual machine |
 | VPC | Network infrastructure |
-| Subnet | Private IP network |
-| Cloud Firewall | HTTP traffic control |
-| Docker | Containerization |
+| Firewall | HTTP traffic control |
+| Docker | Container platform |
 | Nginx | Web server |
 | Debian 12 | VM operating system |
-| Git | Version control |
-| GitHub | Source code repository |
+| Git & GitHub | Version control |
 
 ---
 
-# ☁️ Google Cloud Infrastructure
+## ☁️ GCP Infrastructure
 
-## VPC Network
+### 1. Custom VPC
 
-Terraform creates a custom VPC:
+A custom VPC network was created:
 
 ```text
 project12-vpc
 ```
 
-The VPC uses:
+The VPC uses custom subnet configuration instead of automatically created subnets.
+
+### 2. Subnet
+
+A dedicated subnet was created:
 
 ```text
-auto_create_subnetworks = false
+Name: project12-subnet
+Region: asia-south1
+CIDR: 10.10.0.0/24
 ```
 
-This allows the subnet to be explicitly managed by Terraform.
+### 3. Firewall Rule
 
-### Screenshot
-
-Add your GCP VPC screenshot here:
-
-```text
-screenshots/01-vpc-network.png
-```
-
-![Terraform GCP VPC](screenshots/01-vpc-network.png)
-
----
-
-# 🌐 Subnet
-
-Terraform creates the following subnet:
-
-```text
-Name:       project12-subnet
-Region:     asia-south1
-CIDR:       10.10.0.0/24
-```
-
-The subnet is attached to:
-
-```text
-project12-vpc
-```
-
-### Screenshot
-
-```text
-screenshots/02-subnet.png
-```
-
-![Project 12 Subnet](screenshots/02-subnet.png)
-
----
-
-# 🔥 Firewall Rule
-
-Terraform creates an HTTP firewall rule:
+Terraform created an HTTP firewall rule:
 
 ```text
 Name: project12-vpc-allow-http
@@ -142,387 +93,141 @@ Source: 0.0.0.0/0
 
 This allows HTTP traffic to reach the Nginx web server.
 
-### Screenshot
+### 4. Compute Engine VM
+
+Terraform provisions a Compute Engine VM:
 
 ```text
-screenshots/03-firewall.png
+Name: project12-app-vm
+Zone: asia-south1-b
+Machine Type: e2-medium
+OS: Debian 12
+Disk: 20 GB
 ```
 
-![Project 12 Firewall](screenshots/03-firewall.png)
+The VM receives an ephemeral public IP address.
 
----
+### 5. Docker and Nginx
 
-# 💻 Compute Engine VM
-
-Terraform provisions a Compute Engine VM with the following configuration:
-
-| Configuration | Value |
-|---|---|
-| VM Name | `project12-app-vm` |
-| Machine Type | `e2-medium` |
-| Zone | `asia-south1-b` |
-| Operating System | Debian 12 |
-| Boot Disk | 20 GB |
-| Disk Type | pd-balanced |
-| Network | `project12-vpc` |
-| Subnet | `project12-subnet` |
-| HTTP | Port 80 |
-| Public IP | Terraform generated |
-
-### Screenshot
-
-```text
-screenshots/04-compute-engine-vm.png
-```
-
-![Project 12 Compute Engine VM](screenshots/04-compute-engine-vm.png)
-
----
-
-# 🐳 Docker Deployment
-
-The VM is automatically configured using the Terraform startup script.
-
-Terraform installs Docker:
+A Terraform startup script automatically installs Docker and starts an Nginx container.
 
 ```bash
 apt-get update
 apt-get install -y docker.io
-```
-
-Then Docker is enabled and started:
-
-```bash
 systemctl enable docker
 systemctl start docker
-```
-
-Finally, Terraform runs the Nginx container:
-
-```bash
 docker run -d --name project12-nginx -p 80:80 nginx:latest
 ```
 
-This means Docker and Nginx are deployed automatically when the VM starts.
-
-### Screenshot
-
-Add a terminal screenshot showing Docker:
-
-```text
-screenshots/05-docker.png
-```
-
-![Docker running on Project 12 VM](screenshots/05-docker.png)
+This allows Nginx to start automatically when the VM is created.
 
 ---
 
-# 🌍 Nginx Web Application
-
-The Nginx container listens on:
-
-```text
-Port 80
-```
-
-The application can be accessed through the VM's public IP.
-
-Terraform provides the public IP using an output variable:
-
-```bash
-terraform output
-```
-
-Example:
-
-```text
-vm_public_ip = "<VM_PUBLIC_IP>"
-```
-
-The Nginx web page was successfully accessed through the public IP.
-
-### Screenshot
-
-Add your browser screenshot of the Nginx page:
-
-```text
-screenshots/06-nginx-web-page.png
-```
-
-![Nginx Web Application](screenshots/06-nginx-web-page.png)
-
----
-
-# 🧩 Terraform Configuration
-
-## Provider
-
-Terraform uses the Google Cloud provider:
-
-```hcl
-provider "google" {
-  project = var.project_id
-  region  = var.region
-  zone    = var.zone
-}
-```
-
----
-
-## Terraform Variables
-
-The project uses variables for reusable configuration:
-
-```hcl
-variable "project_id" {
-  description = "GCP Project ID"
-  type        = string
-}
-
-variable "region" {
-  description = "GCP region"
-  type        = string
-  default     = "asia-south1"
-}
-
-variable "zone" {
-  description = "GCP zone"
-  type        = string
-  default     = "asia-south1-b"
-}
-
-variable "machine_type" {
-  description = "Compute Engine machine type"
-  type        = string
-  default     = "e2-medium"
-}
-
-variable "vm_name" {
-  description = "Name of the Terraform-created VM"
-  type        = string
-  default     = "project12-app-vm"
-}
-```
-
----
-
-# 🚀 Terraform Workflow
-
-## 1. Initialize Terraform
-
-```bash
-terraform init
-```
-
-This downloads the required Terraform provider.
-
-### Screenshot
-
-```text
-screenshots/07-terraform-init.png
-```
-
-![Terraform Init](screenshots/07-terraform-init.png)
-
----
-
-## 2. Validate Configuration
-
-```bash
-terraform validate
-```
-
-Expected result:
-
-```text
-Success! The configuration is valid.
-```
-
-### Screenshot
-
-```text
-screenshots/08-terraform-validate.png
-```
-
-![Terraform Validate](screenshots/08-terraform-validate.png)
-
----
-
-## 3. Create an Execution Plan
-
-```bash
-terraform plan
-```
-
-Terraform displays the resources that will be created or modified.
-
-Example:
-
-```text
-Plan: 1 to add, 0 to change, 0 to destroy.
-```
-
-### Screenshot
-
-```text
-screenshots/09-terraform-plan.png
-```
-
-![Terraform Plan](screenshots/09-terraform-plan.png)
-
----
-
-## 4. Apply Infrastructure
-
-```bash
-terraform apply
-```
-
-Confirm with:
-
-```text
-yes
-```
-
-Terraform then provisions the required GCP resources.
-
-Successful deployment:
-
-```text
-Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
-```
-
-### Screenshot
-
-```text
-screenshots/10-terraform-apply.png
-```
-
-![Terraform Apply](screenshots/10-terraform-apply.png)
-
----
-
-# 📤 Terraform Output
-
-The VM public IP is exposed using a Terraform output:
-
-```hcl
-output "vm_public_ip" {
-  description = "Public IP address of the Terraform-created VM"
-  value       = google_compute_instance.project12_app_vm.network_interface[0].access_config[0].nat_ip
-}
-```
-
-Retrieve it using:
-
-```bash
-terraform output
-```
-
-Example:
-
-```text
-vm_public_ip = "<VM_PUBLIC_IP>"
-```
-
-### Screenshot
-
-```text
-screenshots/11-terraform-output.png
-```
-
-![Terraform Output](screenshots/11-terraform-output.png)
-
----
-
-# 🧪 Application Testing
-
-The Nginx application was tested using:
-
-```bash
-curl http://<VM_PUBLIC_IP>
-```
-
-The server returned the Nginx welcome page:
-
-```text
-Welcome to nginx!
-```
-
-This confirms that:
-
-- The VM is running
-- The firewall allows HTTP traffic
-- Docker is running
-- The Nginx container is running
-- Port 80 is accessible
-- The web application is working
-
-### Screenshot
-
-```text
-screenshots/12-nginx-curl-test.png
-```
-
-![Nginx Curl Test](screenshots/12-nginx-curl-test.png)
-
----
-
-# 📁 Project Structure
+## 📂 Project Structure
 
 ```text
 project12-terraform-gcp-infrastructure/
 │
 ├── main.tf
 ├── variables.tf
+├── terraform.tfvars
 ├── .terraform.lock.hcl
-├── .gitignore
 ├── README.md
-│
-└── screenshots/
-    ├── 01-vpc-network.png
-    ├── 02-subnet.png
-    ├── 03-firewall.png
-    ├── 04-compute-engine-vm.png
-    ├── 05-docker.png
-    ├── 06-nginx-web-page.png
-    ├── 07-terraform-init.png
-    ├── 08-terraform-validate.png
-    ├── 09-terraform-plan.png
-    ├── 10-terraform-apply.png
-    ├── 11-terraform-output.png
-    └── 12-nginx-curl-test.png
+└── .gitignore
+```
+
+### `main.tf`
+
+Contains the Terraform configuration for:
+
+- Google Cloud provider
+- VPC
+- Subnet
+- Firewall
+- Compute Engine VM
+- Docker installation
+- Nginx deployment
+- Public IP output
+
+### `variables.tf`
+
+Defines reusable Terraform variables such as:
+
+- Project ID
+- Region
+- Zone
+- Machine type
+- VM name
+
+### `terraform.tfvars`
+
+Contains the project-specific Terraform variable values.
+
+Sensitive/local configuration files are excluded from Git using `.gitignore`.
+
+---
+
+## 🚀 Terraform Workflow
+
+The infrastructure was deployed using the standard Terraform workflow:
+
+```bash
+terraform init
+```
+
+```bash
+terraform plan
+```
+
+```bash
+terraform apply
+```
+
+Terraform successfully created the infrastructure.
+
+```text
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
 ```
 
 ---
 
-# 🔐 Security and Git Configuration
+## 🔍 Verification
 
-Terraform state files can contain infrastructure information and should not be committed to GitHub.
+Terraform provides the VM public IP using an output variable:
 
-The project therefore uses `.gitignore` to exclude:
-
-```text
-.terraform/
-*.tfstate
-*.tfstate.*
-*.tfvars
-*.tfvars.json
+```bash
+terraform output
 ```
 
-The Terraform provider lock file is committed:
+Example:
 
 ```text
-.terraform.lock.hcl
+vm_public_ip = "PUBLIC_IP"
 ```
 
-This helps maintain consistent provider versions.
+The Nginx application can then be tested using:
+
+```bash
+curl http://PUBLIC_IP
+```
+
+The browser can also be used to access:
+
+```text
+http://PUBLIC_IP
+```
+
+The deployed application displays the default:
+
+```text
+Welcome to nginx!
+```
 
 ---
 
-# 🔄 Infrastructure Lifecycle
+## 🔄 Infrastructure Lifecycle
 
-Terraform manages the infrastructure lifecycle.
+Terraform can manage the complete infrastructure lifecycle.
 
 ### Create
 
@@ -530,82 +235,91 @@ Terraform manages the infrastructure lifecycle.
 terraform apply
 ```
 
-### Inspect
+### Review Changes
 
 ```bash
 terraform plan
 ```
 
-### Get Outputs
-
-```bash
-terraform output
-```
-
 ### Destroy
-
-When the infrastructure is no longer required:
 
 ```bash
 terraform destroy
 ```
 
-> ⚠️ `terraform destroy` removes the Terraform-managed GCP resources. Use it only when you are finished with the deployment.
+This demonstrates how Infrastructure as Code can be used to create and remove cloud infrastructure in a repeatable way.
 
 ---
 
-# 🎯 Learning Outcomes
+## 🔐 Security and Configuration
+
+The project uses:
+
+- A dedicated custom VPC
+- A dedicated subnet
+- An explicit HTTP firewall rule
+- Terraform variables
+- `.gitignore` to prevent Terraform state and variable files from being committed
+
+Terraform state files and local variable files are excluded from Git.
+
+---
+
+## 📸 Project Screenshots
+
+### Terraform Configuration
+
+![Terraform Code](screenshots/01-terraform-code.png)
+
+### Terraform Apply
+
+![Terraform Apply](screenshots/02-terraform-apply.png)
+
+### Google Cloud VM
+
+![GCP VM](screenshots/03-gcp-vm.png)
+
+### Nginx Web Application
+
+![Nginx](screenshots/04-nginx.png)
+
+### Terraform Output
+
+![Terraform Output](screenshots/05-terraform-output.png)
+
+---
+
+## 🎯 Learning Outcomes
 
 Through this project, I practiced:
 
 - Infrastructure as Code
 - Terraform configuration
-- Terraform providers
+- Terraform providers and resources
 - Terraform variables
 - Terraform outputs
-- Terraform state management
-- Terraform planning and deployment
-- Google Cloud VPC configuration
-- Google Cloud subnet configuration
-- Firewall configuration
+- Google Cloud networking
+- VPC and subnet configuration
+- GCP firewall configuration
 - Compute Engine provisioning
 - Startup scripts
-- Docker installation automation
+- Docker deployment
 - Nginx container deployment
-- Git version control
-- GitHub repository management
+- Terraform state management
+- Git and GitHub version control
 
 ---
 
-# 📸 Project Screenshots
+## 📌 Project Status
 
-The main implementation screenshots include:
+**Completed ✅**
 
-1. Terraform configuration
-2. Terraform initialization
-3. Terraform validation
-4. Terraform plan
-5. Terraform apply
-6. GCP VPC
-7. GCP subnet
-8. GCP firewall
-9. Compute Engine VM
-10. Docker container
-11. Terraform public IP output
-12. Nginx web application
+Infrastructure was successfully provisioned on Google Cloud using Terraform, and an Nginx web application was deployed inside a Docker container on the Terraform-created Compute Engine VM.
 
 ---
 
-# ✅ Project Status
-
-**Completed successfully**
-
-Terraform successfully provisioned the Google Cloud infrastructure, configured the Compute Engine VM, installed Docker automatically, deployed Nginx, and exposed the web application through HTTP.
-
----
-
-# 👨‍💻 Author
+## 👨‍💻 Author
 
 **Dheeraj Paramata**
 
-DevOps | Cloud | Infrastructure as Code | Docker | Kubernetes | AWS | GCP | Git/GitHub
+GitHub: [Dheerajparamata](https://github.com/Dheerajparamata)
